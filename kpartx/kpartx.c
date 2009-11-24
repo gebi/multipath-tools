@@ -82,7 +82,7 @@ initpts(void)
 	addpts("sun", read_sun_pt);
 }
 
-static char short_opts[] = "ladgvp:t:";
+static char short_opts[] = "rladgvp:t:";
 
 /* Used in gpt.c */
 int force_gpt=0;
@@ -93,6 +93,7 @@ usage(void) {
 	printf("\t-a add partition devmappings\n");
 	printf("\t-d del partition devmappings\n");
 	printf("\t-l list partitions devmappings that would be added by -a\n");
+	printf("\t-r devmappings will be readonly\n");
 	printf("\t-p set device name-partition number delimiter\n");
 	printf("\t-g force GUID partition table (GPT)\n");
 	printf("\t-v verbose\n");
@@ -184,7 +185,7 @@ get_hotplug_device(void)
 
 int
 main(int argc, char **argv){
-	int fd, i, j, m, n, op, off, arg, c, d;
+	int fd, i, j, m, n, op, off, arg, c, d, ro=0;
 	struct slice all;
 	struct pt *ptp;
 	enum action what = LIST;
@@ -230,6 +231,9 @@ main(int argc, char **argv){
 	}
 
 	while ((arg = getopt(argc, argv, short_opts)) != EOF) switch(arg) {
+		case 'r':
+			ro=1;
+			break;
 		case 'g':
 			force_gpt=1;
 			break;
@@ -461,7 +465,7 @@ main(int argc, char **argv){
 					DM_DEVICE_RELOAD : DM_DEVICE_CREATE);
 
 				if (!dm_addmap(op, partname, DM_TARGET, params,
-					       slices[j].size, uuid, j+1,
+					       slices[j].size, ro, uuid, j+1,
 					       buf.st_mode & 0777, buf.st_uid,
 					       buf.st_gid)) {
 					fprintf(stderr, "create/reload failed on %s\n",
@@ -525,7 +529,7 @@ main(int argc, char **argv){
 					      DM_DEVICE_RELOAD : DM_DEVICE_CREATE);
 
 					dm_addmap(op, partname, DM_TARGET, params,
-						  slices[j].size, uuid, j+1,
+						  slices[j].size, ro, uuid, j+1,
 						  buf.st_mode & 0777,
 						  buf.st_uid, buf.st_gid);
 
